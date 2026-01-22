@@ -1,0 +1,12 @@
+[
+  {
+    "id": "group_1",
+    "name": "Classic Novels",
+    "files": [
+      {
+        "name": "Classic Novels",
+        "path": "file1.pdf"
+      }
+    ]
+  }
+]
