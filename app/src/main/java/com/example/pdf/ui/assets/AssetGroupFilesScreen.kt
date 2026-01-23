@@ -24,6 +24,8 @@ import androidx.navigation.NavController
 import com.example.pdf.PdfApplication
 import com.example.pdf.data.AssetFile
 import com.example.pdf.data.AssetGroup
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,11 +44,14 @@ fun AssetGroupFilesScreen(navController: NavController, groupId: String) {
             TopAppBar(title = { Text(group?.name ?: "Files") })
         }
     ) { padding ->
-        group?.let {
+        group?.let { assetGroup ->
             LazyColumn(modifier = Modifier.padding(padding)) {
-                items(it.files) { file ->
+                items(assetGroup.files) { file ->
                     AssetFileListItem(file = file) {
-                        navController.navigate("reader/${file.path}")
+                        val filePaths = assetGroup.files.map { it.path }
+                        val index = assetGroup.files.indexOf(file)
+                        val encodedFilePaths = filePaths.joinToString(",") { URLEncoder.encode(it, StandardCharsets.UTF_8.toString()) }
+                        navController.navigate("reader/${encodedFilePaths}/${index}")
                     }
                 }
             }

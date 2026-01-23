@@ -6,6 +6,10 @@
       {
         "name": "Classic Novels",
         "path": "file1.pdf"
+      },
+      {
+        "name": "Medieval Novels",
+        "path": "file2.pdf"
       }
     ]
   }
