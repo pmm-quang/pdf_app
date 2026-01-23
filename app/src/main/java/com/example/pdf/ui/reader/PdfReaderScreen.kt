@@ -1,90 +1,107 @@
 package com.example.pdf.ui.reader
 
-import android.util.Base64
-import android.webkit.WebView
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun PdfReaderScreen(filePath: String) {
     val context = LocalContext.current
-    val webView = remember { WebView(context) }
-
-    LaunchedEffect(filePath) {
-        val pdfData = withContext(Dispatchers.IO) {
-            val inputStream = context.assets.open(filePath)
-            val bytes = inputStream.readBytes()
-            Base64.encodeToString(bytes, Base64.NO_WRAP)
+    val renderer = remember(filePath) {
+        try {
+            val file = File(context.cacheDir, "temp.pdf")
+            context.assets.open(filePath).use { inputStream ->
+                FileOutputStream(file).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            val fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            PdfRenderer(fileDescriptor)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-
-        webView.settings.apply {
-            javaScriptEnabled = true
-            allowFileAccess = true
-        }
-
-        val htmlContent = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <script src=\"file:///android_asset/pdfjs/build/pdf.js\"></script>
-            </head>
-            <body>
-                <canvas id=\"pdf-canvas\"></canvas>
-                <script>
-                    const pdfData = atob('$pdfData');
-                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'file:///android_asset/pdfjs/build/pdf.worker.js';
-
-                    const loadingTask = pdfjsLib.getDocument({data: pdfData});
-                    loadingTask.promise.then(function(pdf) {
-                        console.log('PDF loaded');
-                        
-                        // Fetch the first page
-                        const pageNumber = 1;
-                        pdf.getPage(pageNumber).then(function(page) {
-                            console.log('Page loaded');
-                            
-                            const scale = 1.5;
-                            const viewport = page.getViewport({scale: scale});
-
-                            // Prepare canvas using PDF page dimensions
-                            const canvas = document.getElementById('pdf-canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-
-                            // Render PDF page into canvas context
-                            const renderContext = {
-                                canvasContext: context,
-                                viewport: viewport
-                            };
-                            const renderTask = page.render(renderContext);
-                            renderTask.promise.then(function () {
-                                console.log('Page rendered');
-                            });
-                        });
-                    }, function (reason) {
-                        // PDF loading error
-                        console.error(reason);
-                    });
-                </script>
-            </body>
-            </html>
-        """
-
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
     }
 
-    AndroidView(
-        factory = { webView },
-        modifier = Modifier.fillMaxSize()
-    )
+    if (renderer == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Failed to open PDF")
+        }
+        return
+    }
+
+    val mutex = remember { Mutex() }
+    val pageCount = renderer.pageCount
+    val bitmaps = remember { mutableStateListOf<Bitmap?>().apply { addAll(List(pageCount) { null }) } }
+
+    DisposableEffect(renderer) {
+        onDispose {
+            renderer.close()
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        itemsIndexed(
+            items = bitmaps,
+            key = { index, _ -> index }
+        ) { index, bitmap ->
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "PDF Page ${index + 1}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    contentScale = ContentScale.FillWidth
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "Loading page ${index + 1}...")
+                    LaunchedEffect(index) {
+                        mutex.withLock {
+                            if (bitmaps[index] == null) {
+                                val page = renderer.openPage(index)
+                                val newBitmap =
+                                    Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+                                page.render(newBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                                page.close()
+                                bitmaps[index] = newBitmap
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

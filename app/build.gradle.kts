@@ -6,13 +6,11 @@ plugins {
 
 android {
     namespace = "com.example.pdf"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.pdf"
-        minSdk = 24
+        minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -54,6 +52,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.gson)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation("androidx.pdf:pdf-viewer-fragment:1.0.0-alpha12")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
