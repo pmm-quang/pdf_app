@@ -27,7 +27,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable("group_detail/{groupId}") { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId")
             if (groupId != null) {
-                GroupDetailScreen(groupId = groupId, onPdfClicked = { filePaths, index ->
+                GroupDetailScreen(groupId = groupId, navController = navController, onPdfClicked = { filePaths, index ->
                     val encodedFilePaths = filePaths.joinToString(",") { URLEncoder.encode(it, StandardCharsets.UTF_8.toString()) }
                     navController.navigate("pdf_reader/$encodedFilePaths/$index")
                 })

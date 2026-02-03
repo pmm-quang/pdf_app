@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pdf.ui.assets.AssetGroupFilesScreen
 import com.example.pdf.ui.assets.AssetGroupsScreen
+import com.example.pdf.ui.drive.GoogleDriveScreen
 import com.example.pdf.ui.groupdetail.GroupDetailScreen
 import com.example.pdf.ui.groups.CreateGroupScreen
 import com.example.pdf.ui.groups.GroupsScreen
@@ -64,6 +65,12 @@ fun MainScreen() {
             composable(Screen.MyLibrary.route) { GroupsScreen(navController) }
             composable(Screen.Discover.route) { AssetGroupsScreen(navController) }
             composable("create_group") { CreateGroupScreen(navController) }
+            composable("google_drive/{groupId}", arguments = listOf(navArgument("groupId") { type = NavType.StringType })) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId")
+                if (groupId != null) {
+                    GoogleDriveScreen(groupId = groupId, navController = navController)
+                }
+            }
             composable(
                 "assetGroupFiles/{groupId}",
                 arguments = listOf(navArgument("groupId") { type = NavType.StringType })
@@ -73,7 +80,10 @@ fun MainScreen() {
             composable("group_detail/{groupId}") { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId")
                 if (groupId != null) {
-                    GroupDetailScreen(groupId = groupId, onPdfClicked = { filePaths, index ->
+                    GroupDetailScreen(
+                        groupId = groupId, 
+                        navController = navController,
+                        onPdfClicked = { filePaths, index ->
                         val encodedFilePaths = filePaths.joinToString(",") { URLEncoder.encode(it, StandardCharsets.UTF_8.toString()) }
                         navController.navigate("reader/$encodedFilePaths/$index")
                     })
