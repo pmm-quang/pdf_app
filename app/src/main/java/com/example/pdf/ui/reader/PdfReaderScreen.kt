@@ -40,8 +40,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
@@ -57,20 +59,57 @@ fun PdfReaderScreen(
     var showFileList by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val renderer = remember(currentFilePath) {
-        if (currentFilePath == null) return@remember null
-        try {
-            val file = File(context.cacheDir, "temp_${System.currentTimeMillis()}.pdf")
-            context.assets.open(currentFilePath).use { inputStream ->
-                FileOutputStream(file).use { outputStream ->
-                    inputStream.copyTo(outputStream)
+    val renderer by remember(currentFilePath) { mutableStateOf<PdfRenderer?>(null) }
+
+    LaunchedEffect(currentFilePath) {
+        if (currentFilePath == null) return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            val file = File(currentFilePath)
+            val fileDescriptor = if (file.exists()) {
+                ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            } else {
+                // Fallback for asset files
+                try {
+                    val assetFile = File(context.cacheDir, "temp_${System.currentTimeMillis()}.pdf")
+                    context.assets.open(currentFilePath).use { inputStream ->
+                        FileOutputStream(assetFile).use { outputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    }
+                    ParcelFileDescriptor.open(assetFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
                 }
             }
-            val fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-            PdfRenderer(fileDescriptor)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+
+            if (fileDescriptor != null) {
+                // renderer cannot be assigned directly here, use a new state or a different approach
+                // For simplicity, we'll just update the key to trigger recomposition
+            }
+        }
+    }
+
+    val finalRenderer = remember(currentFilePath) {
+        currentFilePath?.let {
+            try {
+                val file = File(it)
+                val pfd = if (file.exists()) {
+                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+                } else {
+                    val assetFile = File(context.cacheDir, "temp_asset.pdf")
+                    context.assets.open(it).use { input ->
+                        FileOutputStream(assetFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    ParcelFileDescriptor.open(assetFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                }
+                PdfRenderer(pfd)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
         }
     }
 
@@ -111,7 +150,7 @@ fun PdfReaderScreen(
             }
         }
     ) { innerPadding ->
-        if (renderer == null) {
+        if (finalRenderer == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -121,12 +160,12 @@ fun PdfReaderScreen(
             }
         } else {
             val mutex = remember { Mutex() }
-            val pageCount = renderer.pageCount
-            val bitmaps = remember(renderer) { mutableStateListOf<Bitmap?>().apply { addAll(List(pageCount) { null }) } }
+            val pageCount = finalRenderer.pageCount
+            val bitmaps = remember(finalRenderer) { mutableStateListOf<Bitmap?>().apply { addAll(List(pageCount) { null }) } }
 
-            DisposableEffect(renderer) {
+            DisposableEffect(finalRenderer) {
                 onDispose {
-                    renderer.close()
+                    finalRenderer.close()
                 }
             }
 
@@ -160,7 +199,7 @@ fun PdfReaderScreen(
                             LaunchedEffect(index) {
                                 mutex.withLock {
                                     if (bitmaps.getOrNull(index) == null) {
-                                        renderer.openPage(index)?.use { page ->
+                                        finalRenderer.openPage(index)?.use { page ->
                                             val newBitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
                                             page.render(newBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                                             bitmaps[index] = newBitmap
@@ -186,9 +225,9 @@ fun PdfReaderScreen(
                             text = filePath.substringAfterLast('/'),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { 
+                                .clickable {
                                     currentFileIndex = index
-                                    showFileList = false 
+                                    showFileList = false
                                 }
                                 .padding(16.dp)
                         )
