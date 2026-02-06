@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.pdf.ui.allpdfs.AllPdfsScreen
+import com.example.pdf.ui.drive.GoogleDriveScreen
 import com.example.pdf.ui.groupdetail.GroupDetailScreen
 import com.example.pdf.ui.groups.CreateGroupScreen
 import com.example.pdf.ui.groups.GroupsScreen
@@ -52,6 +53,15 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         }
         composable("create_group") {
             CreateGroupScreen(navController = navController)
+        }
+        composable(
+            "google_drive/{groupId}",
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            if (groupId != null) {
+                GoogleDriveScreen(groupId = groupId, navController = navController)
+            }
         }
     }
 }

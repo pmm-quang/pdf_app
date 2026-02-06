@@ -1,69 +1,58 @@
 package com.example.pdf.ui.drive
 
-import android.content.ContentValues.TAG
 import android.content.Context
-import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pdf.data.PdfFile
-import com.example.pdf.data.PdfRepository
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.FileOutputStream
-import java.util.Date
 
-class GoogleDriveViewModel(private val repository: PdfRepository) : ViewModel() {
+data class DownloadProgress(val fileName: String, val downloadedBytes: Long, val totalBytes: Long)
 
-    val files = mutableStateOf<List<File>>(emptyList())
-    val isLoading = mutableStateOf(false)
-    val isDownloadComplete = mutableStateOf(false)
+class GoogleDriveViewModel(private val groupId: String) : ViewModel() {
 
-    fun getFiles(credential: GoogleAccountCredential) {
-        viewModelScope.launch(Dispatchers.IO) {
-            isLoading.value = true
-            try {
-                val drive = Drive.Builder(com.google.api.client.http.javanet.NetHttpTransport(), com.google.api.client.json.gson.GsonFactory(), credential)
-                    .setApplicationName("Pdf App")
-                    .build()
+    var files by mutableStateOf<List<File>>(emptyList())
+        private set
 
-                val result = drive.files().list()
-                    .setSpaces("drive")
-                    .setQ("mimeType='application/pdf'")
-                    .execute()
+    var selectedFiles by mutableStateOf(emptySet<File>())
+        private set
 
-                files.value = result.files
-            } catch (e: Exception) {
-                Log.e(TAG, "getFiles: ", e)
-            }
-            isLoading.value = false
+    var isLoading by mutableStateOf(false)
+        private set
+
+    var downloadProgress by mutableStateOf<DownloadProgress?>(null)
+        private set
+
+    fun fetchFiles(googleDriveService: GoogleDriveService?, folderId: String) {
+        viewModelScope.launch {
+            isLoading = true
+            files = googleDriveService?.getFiles(folderId) ?: emptyList()
+            isLoading = false
         }
     }
 
-    fun downloadFiles(groupId: String, selectedFiles: List<File>, context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            isLoading.value = true
-            val downloadedFiles = mutableListOf<PdfFile>()
-            val drive = Drive.Builder(com.google.api.client.http.javanet.NetHttpTransport(), com.google.api.client.json.gson.GsonFactory(), null)
-                .setApplicationName("Pdf App")
-                .build()
+    fun toggleFileSelection(file: File) {
+        selectedFiles = if (selectedFiles.contains(file)) {
+            selectedFiles - file
+        } else {
+            selectedFiles + file
+        }
+    }
 
-            selectedFiles.forEach { file ->
-                try {
-                    val filePath = java.io.File(context.filesDir, file.name).absolutePath
-                    val outputStream = FileOutputStream(filePath)
-                    drive.files().get(file.id).executeMediaAndDownloadTo(outputStream)
-                    downloadedFiles.add(PdfFile(name = file.name, path = filePath, totalPages = 0, lastReadPage = 0, lastReadTime = Date()))
-                } catch (e: Exception) {
-                    Log.e(TAG, "downloadFiles: ", e)
+    fun downloadSelectedFiles(googleDriveService: GoogleDriveService?, context: Context) {
+        viewModelScope.launch {
+            isLoading = true
+            googleDriveService?.downloadFiles(groupId, selectedFiles.toList(), context) { fileName, downloaded, total ->
+                // The callback is on a background thread, so launch a new coroutine
+                // on the main thread to update the UI state.
+                viewModelScope.launch {
+                    downloadProgress = DownloadProgress(fileName, downloaded, total)
                 }
             }
-            repository.addFilesToSeries(groupId.toLong(), downloadedFiles)
-            isLoading.value = false
-            isDownloadComplete.value = true
+            isLoading = false
+            downloadProgress = null // Reset progress after download is complete
         }
     }
 }
