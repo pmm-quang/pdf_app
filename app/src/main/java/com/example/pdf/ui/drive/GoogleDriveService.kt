@@ -98,10 +98,14 @@ class GoogleDriveService(
                     request.mediaHttpDownloader.progressListener = progressListener
                     request.executeMediaAndDownloadTo(outputStream)
 
+                    val fileOnDisk = java.io.File(filePath)
+                    val fileSize = if (fileOnDisk.exists()) fileOnDisk.length() else 0L
+
                     downloadedFiles.add(
                         PdfFile(
                             name = selectedFile.name,
                             path = filePath,
+                            size = fileSize,
                             totalPages = 0,
                             lastReadPage = 0,
                             lastReadTime = Date()

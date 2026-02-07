@@ -13,6 +13,7 @@ import com.example.pdf.ui.groupdetail.GroupDetailScreen
 import com.example.pdf.ui.groups.CreateGroupScreen
 import com.example.pdf.ui.groups.GroupsScreen
 import com.example.pdf.ui.reader.PdfReaderScreen
+import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -41,7 +42,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
                 navArgument("initialFileIndex") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val filePaths = backStackEntry.arguments?.getString("filePaths")?.split(",")
+            val filePaths = backStackEntry.arguments?.getString("filePaths")?.split(",")?.map { URLDecoder.decode(it, "UTF-8") }
             val initialFileIndex = backStackEntry.arguments?.getInt("initialFileIndex")
             if (filePaths != null && initialFileIndex != null) {
                 PdfReaderScreen(

@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,18 +22,48 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.pdf.PdfApplication
 import com.example.pdf.data.PdfSeriesWithFiles
+import com.example.pdf.ui.Screen
 
 @Composable
 fun GroupsScreen(navController: NavController) {
     val application = LocalContext.current.applicationContext as PdfApplication
     val groups by application.container.pdfRepository.allPdfSeries.collectAsState(initial = emptyList())
+    val items = listOf(
+        Screen.MyLibrary,
+        Screen.Discover,
+    )
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate("create_group") }) {
                 Icon(Icons.Filled.Add, contentDescription = "Create Group")
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                items.forEach { screen ->
+                    NavigationBarItem(
+                        icon = { Icon(screen.icon, contentDescription = null) },
+                        label = { Text(screen.title) },
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        onClick = {
+                            navController.navigate(screen.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
             }
         }
     ) { padding ->

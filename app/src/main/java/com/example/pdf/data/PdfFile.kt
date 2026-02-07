@@ -9,7 +9,8 @@ data class PdfFile(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val path: String,
-    val totalPages: Int,
-    val lastReadPage: Int,
-    val lastReadTime: Date?
+    val size: Long = 0,
+    val totalPages: Int = 0,
+    val lastReadPage: Int = 0,
+    val lastReadTime: Date? = null
 )
