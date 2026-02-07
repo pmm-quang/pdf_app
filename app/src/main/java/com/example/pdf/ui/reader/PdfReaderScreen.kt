@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,6 +32,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +59,7 @@ fun PdfReaderScreen(
     var showFileList by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(filePaths, initialFileIndex) {
         viewModel.loadPdf(context, filePaths, initialFileIndex)
@@ -89,9 +92,25 @@ fun PdfReaderScreen(
                 ) {
                     Text("Previous")
                 }
+
+                val currentPage by remember {
+                    derivedStateOf {
+                        listState.layoutInfo.visibleItemsInfo.firstOrNull()?.let {
+                            val key = it.key.toString()
+                            if (key.startsWith("page_")) {
+                                key.split('_').getOrNull(2)?.toIntOrNull() ?: 0
+                            } else 0
+                        } ?: 0
+                    }
+                }
+
                 Button(onClick = { showFileList = true }) {
                     val pageCount = state.pageInfos.size
-                    Text("${state.currentFileIndex + 1} of $pageCount")
+                    if (pageCount > 0) {
+                        Text("${currentPage + 1} of $pageCount")
+                    } else {
+                        Text("0 of 0")
+                    }
                 }
                 Button(
                     onClick = { viewModel.changeFile(context, state.currentFileIndex + 1) },
@@ -118,7 +137,10 @@ fun PdfReaderScreen(
                 state.pageInfos.isNotEmpty() -> {
                     val screenWidth = context.resources.displayMetrics.widthPixels
                     val stripHeight = screenWidth * 2 // Must match ViewModel
-                    val listState = rememberLazyListState()
+
+                    LaunchedEffect(state.currentFileIndex) {
+                        listState.scrollToItem(0)
+                    }
 
                     LazyColumn(
                         modifier = Modifier
@@ -161,7 +183,8 @@ fun PdfReaderScreen(
             onDismissRequest = { showFileList = false },
             title = { Text("Choose a file") },
             text = {
-                LazyColumn {
+                val lazyListState = rememberLazyListState()
+                LazyColumn(state = lazyListState) {
                     itemsIndexed(state.filePaths) { index, filePath ->
                         Text(
                             text = filePath.substringAfterLast('/'),
