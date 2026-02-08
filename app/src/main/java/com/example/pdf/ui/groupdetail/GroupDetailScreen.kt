@@ -36,11 +36,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pdf.PdfApplication
+import com.example.pdf.R
 import com.example.pdf.data.PdfFile
 import com.example.pdf.ui.ViewModelFactory
 
@@ -56,11 +58,11 @@ fun GroupDetailScreen(groupId: String, navController: NavController, onPdfClicke
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(group?.series?.name ?: "Group Details") })
+            TopAppBar(title = { Text(group?.series?.name ?: stringResource(R.string.group_details_title)) })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate("google_drive/$groupId") }) {
-                Icon(Icons.Filled.Add, contentDescription = "Sync with Google Drive")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.sync_with_google_drive))
             }
         }
     ) { padding ->
@@ -78,11 +80,11 @@ fun GroupDetailScreen(groupId: String, navController: NavController, onPdfClicke
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Inbox,
-                            contentDescription = "Empty group",
+                            contentDescription = stringResource(R.string.empty_group_placeholder),
                             modifier = Modifier.size(128.dp)
                         )
-                        Text(text = "This group is empty.")
-                        Text(text = "Sync with Google Drive to add files.")
+                        Text(text = stringResource(R.string.empty_group_message_1))
+                        Text(text = stringResource(R.string.empty_group_message_2))
                     }
                 }
             } else {
@@ -109,8 +111,8 @@ fun GroupDetailScreen(groupId: String, navController: NavController, onPdfClicke
         fileToDelete?.let { file ->
             AlertDialog(
                 onDismissRequest = { fileToDelete = null },
-                title = { Text("Delete File") },
-                text = { Text("Are you sure you want to delete '${file.name}'? This action cannot be undone.") },
+                title = { Text(stringResource(R.string.delete_file_title)) },
+                text = { Text(stringResource(R.string.delete_file_message, file.name)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -118,12 +120,12 @@ fun GroupDetailScreen(groupId: String, navController: NavController, onPdfClicke
                             fileToDelete = null
                         }
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.delete))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { fileToDelete = null }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -158,7 +160,7 @@ fun PdfFileListItem(file: PdfFile, onClick: () -> Unit, onDelete: () -> Unit) {
 
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete File")
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_file_title))
             }
         }
     }

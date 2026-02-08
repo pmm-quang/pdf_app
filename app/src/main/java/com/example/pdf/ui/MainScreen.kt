@@ -13,6 +13,9 @@ import com.example.pdf.ui.groupdetail.GroupDetailScreen
 import com.example.pdf.ui.groups.CreateGroupScreen
 import com.example.pdf.ui.groups.GroupsScreen
 import com.example.pdf.ui.reader.PdfReaderScreen
+import com.example.pdf.ui.settings.AccountSettingsScreen
+import com.example.pdf.ui.settings.LanguageSettingsScreen
+import com.example.pdf.ui.settings.SettingsScreen
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -23,6 +26,9 @@ fun MainScreen() {
     NavHost(navController, startDestination = Screen.MyLibrary.route) {
         composable(Screen.MyLibrary.route) { GroupsScreen(navController) }
         composable(Screen.Discover.route) { AssetGroupsScreen(navController) }
+        composable("settings") { SettingsScreen(navController) }
+        composable("account_settings") { AccountSettingsScreen() }
+        composable("language_settings") { LanguageSettingsScreen(navController) }
         composable("create_group") { CreateGroupScreen(navController) }
         composable("google_drive/{groupId}", arguments = listOf(navArgument("groupId") { type = NavType.StringType })) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId")

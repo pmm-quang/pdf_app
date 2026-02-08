@@ -42,8 +42,13 @@ class GoogleDriveViewModel(private val groupId: String) : ViewModel() {
     }
 
     fun downloadSelectedFiles(googleDriveService: GoogleDriveService?, context: Context) {
+        if (selectedFiles.isEmpty()) return
         viewModelScope.launch {
             isLoading = true
+            // Immediately set progress for the first file to show the UI.
+            val firstFile = selectedFiles.first()
+            downloadProgress = DownloadProgress(firstFile.name, 0L, 0L) // 0 downloaded, 0 total to show indeterminate progress
+
             googleDriveService?.downloadFiles(groupId, selectedFiles.toList(), context) { fileName, downloaded, total ->
                 // The callback is on a background thread, so launch a new coroutine
                 // on the main thread to update the UI state.
@@ -53,6 +58,7 @@ class GoogleDriveViewModel(private val groupId: String) : ViewModel() {
             }
             isLoading = false
             downloadProgress = null // Reset progress after download is complete
+            selectedFiles = emptySet() // Clear selection after download
         }
     }
 }

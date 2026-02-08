@@ -39,11 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pdf.PdfApplication
+import com.example.pdf.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -111,14 +113,14 @@ fun GoogleDriveScreen(groupId: String, navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Google Drive") },
+                title = { Text(stringResource(R.string.google_drive_title)) },
                 navigationIcon = {
                     if (folderStack.size > 1) {
                         IconButton(onClick = {
                             folderStack = folderStack.dropLast(1)
                             viewModel.fetchFiles(googleDriveService, folderStack.last())
                         }) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     }
                 }
@@ -135,7 +137,7 @@ fun GoogleDriveScreen(groupId: String, navController: NavController) {
             if (googleDriveService == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Button(onClick = { signInLauncher.launch(googleSignInClient.signInIntent) }) {
-                        Text("Sign in to Google Drive")
+                        Text(stringResource(R.string.sign_in_to_google_drive))
                     }
                 }
             } else if (isLoading && files.isEmpty()) {
@@ -163,7 +165,7 @@ fun GoogleDriveScreen(groupId: String, navController: NavController) {
                             ) {
                                 Icon(
                                     imageVector = if (isFolder) Icons.Filled.Folder else Icons.Filled.PictureAsPdf,
-                                    contentDescription = if (isFolder) "Folder" else "PDF File"
+                                    contentDescription = if (isFolder) stringResource(R.string.folder_description) else stringResource(R.string.pdf_file_description)
                                 )
                                 Spacer(Modifier.width(16.dp))
                                 Text(text = file.name, modifier = Modifier.weight(1f))
@@ -206,7 +208,7 @@ fun GoogleDriveScreen(groupId: String, navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     enabled = selectedFiles.isNotEmpty() && !isLoading
                 ) {
-                    Text("Download Selected Files")
+                    Text(stringResource(R.string.download_selected_files))
                 }
             }
         }

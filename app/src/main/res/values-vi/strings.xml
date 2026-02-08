@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Pdf</string>
+    <string name="title_settings">Cài đặt</string>
+    <string name="title_account_settings">Cài đặt tài khoản</string>
+    <string name="title_language_settings">Ngôn ngữ</string>
+    <string name="settings_account">Tài khoản</string>
+    <string name="settings_language">Ngôn ngữ</string>
+    <string name="account_signed_in_as">Đã đăng nhập với tên: %s</string>
+    <string name="account_sign_out">Đăng xuất</string>
+    <string name="account_switch">Chuyển tài khoản</string>
+    <string name="account_not_signed_in">Chưa đăng nhập vào Google Drive.</string>
+    <string name="account_sign_in">Đăng nhập</string>
+    <string name="language_english">English</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+    <string name="title_my_library">Thư viện của tôi</string>
+    <string name="title_discover">Khám phá</string>
+    <string name="create_group">Tạo nhóm</string>
+    <string name="files_count">%d tệp</string>
+    <string name="delete_file_title">Xóa tệp</string>
+    <string name="delete_file_message">Bạn có muốn xóa không?</string>
+    <string name="delete">Xóa</string>
+    <string name="cancel">Hủy</string>
+    <string name="back">Quay lại</string>
+    <string name="google_drive_title">Google Drive</string>
+    <string name="sign_in_to_google_drive">Đăng nhập vào Google Drive</string>
+    <string name="download_selected_files">Tải xuống các tệp đã chọn</string>
+    <string name="group_details_title">Chi tiết nhóm</string>
+    <string name="sync_with_google_drive">Đồng bộ hóa với Google Drive</string>
+    <string name="empty_group_placeholder">Nhóm trống</string>
+    <string name="empty_group_message_1">Nhóm này trống.</string>
+    <string name="empty_group_message_2">Đồng bộ hóa với Google Drive để thêm tệp.</string>
+    <string name="folder_description">Thư mục</string>
+    <string name="pdf_file_description">Tệp PDF</string>
+    <string name="dummy_string_for_testing">dummy</string>
+</resources>
