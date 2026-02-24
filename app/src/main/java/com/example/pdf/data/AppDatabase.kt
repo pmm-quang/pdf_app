@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [PdfFile::class, PdfSeries::class, PdfSeriesFileCrossRef::class], version = 5)
+@Database(entities = [PdfFile::class, PdfSeries::class, PdfSeriesFileCrossRef::class], version = 6)
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun pdfFileDao(): PdfFileDao

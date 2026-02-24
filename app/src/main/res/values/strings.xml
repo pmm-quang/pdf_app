@@ -32,4 +32,8 @@
     <string name="folder_description">Folder</string>
     <string name="pdf_file_description">PDF File</string>
     <string name="dummy_string_for_testing">dummy</string>
+    <string name="rename_group_title">Rename Group</string>
+    <string name="new_group_name">New group name</string>
+    <string name="rename">Rename</string>
+    <string name="group_options">Group options</string>
 </resources>

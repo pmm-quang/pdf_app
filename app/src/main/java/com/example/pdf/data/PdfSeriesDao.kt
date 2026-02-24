@@ -1,10 +1,12 @@
 package com.example.pdf.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,5 +23,11 @@ interface PdfSeriesDao {
 
     @Transaction
     @Query("SELECT * FROM pdf_series WHERE id = :id")
-    fun getSeriesWithFiles(id: Long): Flow<PdfSeriesWithFiles>
+    fun getSeriesWithFiles(id: Long): Flow<PdfSeriesWithFiles?>
+
+    @Update
+    suspend fun update(pdfSeries: PdfSeries)
+
+    @Delete
+    suspend fun delete(pdfSeries: PdfSeries)
 }

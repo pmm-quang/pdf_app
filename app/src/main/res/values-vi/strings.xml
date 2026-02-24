@@ -32,4 +32,8 @@
     <string name="folder_description">Thư mục</string>
     <string name="pdf_file_description">Tệp PDF</string>
     <string name="dummy_string_for_testing">dummy</string>
+    <string name="rename_group_title">Đổi tên nhóm</string>
+    <string name="new_group_name">Tên nhóm mới</string>
+    <string name="rename">Đổi tên</string>
+    <string name="group_options">Tùy chọn nhóm</string>
 </resources>

@@ -1,22 +1,16 @@
-package com.example.pdf.ui.groupdetail
+package com.example.pdf.ui.groups
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pdf.data.PdfFile
 import com.example.pdf.data.PdfRepository
+import com.example.pdf.data.PdfSeries
 import com.example.pdf.data.PdfSeriesWithFiles
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class GroupDetailViewModel(private val repository: PdfRepository) : ViewModel() {
-
-    fun getGroup(id: String): Flow<PdfSeriesWithFiles?> {
-        return repository.getSeriesById(id.toLong())
-    }
-
-    fun deleteFile(file: PdfFile) {
+class GroupsViewModel(private val repository: PdfRepository) : ViewModel() {
+    fun updateGroup(group: PdfSeries) {
         viewModelScope.launch {
-            repository.deleteFile(file)
+            repository.updatePdfSeries(group)
         }
     }
 

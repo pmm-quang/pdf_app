@@ -8,7 +8,7 @@ class PdfRepository(private val pdfFileDao: PdfFileDao, private val pdfSeriesDao
     val allPdfFiles: Flow<List<PdfFile>> = pdfFileDao.getAll()
     val allPdfSeries: Flow<List<PdfSeriesWithFiles>> = pdfSeriesDao.getSeriesWithFiles()
 
-    fun getSeriesById(id: Long): Flow<PdfSeriesWithFiles> = pdfSeriesDao.getSeriesWithFiles(id)
+    fun getSeriesById(id: Long): Flow<PdfSeriesWithFiles?> = pdfSeriesDao.getSeriesWithFiles(id)
 
     suspend fun insertPdfFile(pdfFile: PdfFile) {
         pdfFileDao.insert(pdfFile)
@@ -20,6 +20,10 @@ class PdfRepository(private val pdfFileDao: PdfFileDao, private val pdfSeriesDao
             val fileId = pdfFileDao.insert(file)
             pdfSeriesDao.insertPdfSeriesFileCrossRef(PdfSeriesFileCrossRef(seriesId, fileId))
         }
+    }
+
+    suspend fun updatePdfSeries(pdfSeries: PdfSeries) {
+        pdfSeriesDao.update(pdfSeries)
     }
 
     suspend fun addFilesToSeries(seriesId: Long, files: List<PdfFile>) {
@@ -43,5 +47,15 @@ class PdfRepository(private val pdfFileDao: PdfFileDao, private val pdfSeriesDao
 
         // Delete the file record from the database
         pdfFileDao.delete(file)
+    }
+
+    suspend fun deletePdfSeries(series: PdfSeriesWithFiles) {
+        // Delete the series record, which will also delete the cross-references
+        pdfSeriesDao.delete(series.series)
+
+        // Delete all associated files
+        series.files.forEach { pdfFile ->
+            deleteFile(pdfFile)
+        }
     }
 }
